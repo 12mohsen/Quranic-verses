@@ -533,6 +533,14 @@ html[dir="ltr"] .ctx-menu{direction:ltr}
 
 <script>
 // ============================================================
+// WEBVIEW DETECTION
+// ============================================================
+window._isWebView = (function(){
+  const ua=navigator.userAgent||'';
+  return /wv|WebView|AppCreator|; wv\)/i.test(ua) || (typeof window.Android!=='undefined') || (window.webkit&&window.webkit.messageHandlers) || !/Safari/.test(ua)&&/AppleWebKit/.test(ua);
+})();
+
+// ============================================================
 // i18n - LANGUAGE SYSTEM
 // ============================================================
 let currentLang = localStorage.getItem('q_lang') || 'ar';
@@ -2471,17 +2479,29 @@ function wrapTxt(ctx,text,mw){
   for(const wd of w){const t=ln+(ln?' ':'')+wd;if(ctx.measureText(t).width>mw&&ln){lines.push(ln);ln=wd;}else ln=t;}
   if(ln)lines.push(ln);return lines;
 }
+function copyToClipboardFallback(text){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');return true;}catch(e){return false;}
+  finally{document.body.removeChild(ta);}
+}
+function showCopiedToast(){
+  let t=document.getElementById('copiedToast');
+  if(!t){t=document.createElement('div');t.id='copiedToast';
+    t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(46,204,113,0.95);color:#fff;padding:10px 28px;border-radius:25px;font-size:15px;z-index:99999;pointer-events:none;transition:opacity .4s;font-family:sans-serif';
+    document.body.appendChild(t);}
+  t.textContent=T('copied');t.style.opacity='1';
+  setTimeout(()=>{t.style.opacity='0';},1800);
+}
 function shareAsImage(){
   const c=document.getElementById('shareCanvas');
-  c.toBlob(blob=>{
-    if(navigator.share&&navigator.canShare){
-      const file=new File([blob],'quran-verse.png',{type:'image/png'});
-      navigator.share({files:[file]}).catch(()=>{});
-    } else {
-      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-      a.download='quran-verse.png';a.click();
-    }
-  });
+  try{
+    const dataUrl=c.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=dataUrl;a.download='quran-verse.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  }catch(e){console.error('Share image error:',e);}
 }
 function shareAsText(withT){
   // Build text with verse numbers for multiple verses
@@ -2499,8 +2519,15 @@ function shareAsText(withT){
   let full=`${txt}${ref}`;
   if(document.getElementById('shareBrand').checked) full+='\n\n'+T('brand');
   console.log('Sharing text:', shareData.length, 'verses, length:', full.length);
-  if(navigator.share) navigator.share({text:full}).catch(()=>{});
-  else navigator.clipboard.writeText(full).then(()=>alert(T('copied')));
+  let copied=false;
+  if(navigator.clipboard&&navigator.clipboard.writeText&&!window._isWebView){
+    navigator.clipboard.writeText(full).then(()=>showCopiedToast()).catch(()=>{
+      if(copyToClipboardFallback(full)) showCopiedToast();
+    });
+  } else {
+    copied=copyToClipboardFallback(full);
+    if(copied) showCopiedToast();
+  }
 }
 
 // TEXT MUSHAF SWIPE
