@@ -161,10 +161,25 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);background-im
 /* IMAGE PREVIEW OVERLAY */
 #imgPreviewOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;}
 #imgPreviewOverlay.show{display:flex;}
-#imgPreviewOverlay img{max-width:100%;max-height:70vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.6);}
-#imgPreviewOverlay .ipo-hint{color:rgba(255,255,255,0.7);font-size:13px;text-align:center;}
+#imgPreviewOverlay img{max-width:100%;max-height:60vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.6);}
 #imgPreviewOverlay .ipo-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-#imgPreviewOverlay .ipo-share-btn{background:var(--primary);color:#fff;border:none;padding:14px 32px;border-radius:28px;font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;}
+#imgPreviewOverlay .ipo-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+#imgPreviewOverlay .ipo-btn{background:rgba(255,255,255,0.12);color:#fff;border:none;padding:12px 20px;border-radius:24px;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;}
+#imgPreviewOverlay .ipo-btn.wa{background:#25D366;}
+#imgPreviewOverlay .ipo-btn.tg{background:#2AABEE;}
+#imgPreviewOverlay .ipo-btn.dl{background:rgba(255,255,255,0.18);}
+/* CUSTOM SHARE SHEET */
+.ss-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10002;display:none;align-items:flex-end;justify-content:center;}
+.ss-overlay.show{display:flex;}
+.ss-sheet{background:var(--bg);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:14px 20px 32px;animation:ssUp .22s ease;border-top:1px solid var(--border);}
+@keyframes ssUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.ss-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 14px;}
+.ss-ttl{text-align:center;font-size:13px;color:var(--muted);margin-bottom:20px;}
+.ss-row{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
+.ss-btn{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;text-decoration:none;border:none;background:none;padding:4px;}
+.ss-ico{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;}
+.ss-lbl{font-size:11px;color:var(--text);font-family:inherit;white-space:nowrap;}
+.ss-cancel{width:100%;margin-top:4px;padding:14px;border:none;border-radius:14px;background:var(--card);color:var(--text);font-size:15px;cursor:pointer;font-family:inherit;}
 
 /* TAGS */
 .tag{font-size:11px;padding:2px 10px;border-radius:12px;background:var(--primary);color:#fff;display:inline-block}
@@ -528,10 +543,21 @@ html[dir="ltr"] .ctx-menu{direction:ltr}
 <div id="imgPreviewOverlay">
   <button class="ipo-close" onclick="closeImgPreview()"><i class="fa fa-times"></i></button>
   <img id="ipoImg" src="" alt="">
-  <p class="ipo-hint" id="ipoHint">اضغط مطولاً على الصورة للحفظ أو المشاركة</p>
-  <button class="ipo-share-btn" id="ipoShareBtn" onclick="ipoDoShare()">
-    <i class="fa fa-share-nodes"></i> <span>مشاركة</span>
-  </button>
+  <div class="ipo-actions">
+    <button class="ipo-btn wa" onclick="ssShareToApp('wa')"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+    <button class="ipo-btn tg" onclick="ssShareToApp('tg')"><i class="fa-brands fa-telegram"></i> Telegram</button>
+    <button class="ipo-btn dl" onclick="downloadFromSS()"><i class="fa fa-download"></i> <span id="ipoDlLabel">حفظ</span></button>
+  </div>
+</div>
+
+<!-- CUSTOM SHARE SHEET -->
+<div class="ss-overlay" id="ssOverlay" onclick="if(event.target===this)closeShareSheet()">
+  <div class="ss-sheet">
+    <div class="ss-handle"></div>
+    <div class="ss-ttl" id="ssTtl">مشاركة عبر</div>
+    <div class="ss-row" id="ssRow"></div>
+    <button class="ss-cancel" onclick="closeShareSheet()" data-i18n="cancel">إلغاء</button>
+  </div>
 </div>
 
 <!-- SHARE MODAL -->
@@ -586,7 +612,7 @@ const LANG = {
     loadingReciters: 'جاري تحميل القراء...',
     gotoPrompt: 'أدخل رقم الصفحة (1-604)',
     bookmarkN: 'فاصل',
-    all: 'الكل', noReciters: 'لا يوجد قراء', narrationHafs: 'حفص عن عاصم',
+    all: 'الكل', noReciters: 'لا يوجد قراء', narrationHafs: 'حفص عن عاصم', cancel: 'إلغاء',
     shareTitle: 'مشاركة',
     shareImage: 'مشاركة صورة',
     shareText: 'مشاركة نص',
@@ -621,7 +647,7 @@ const LANG = {
     loadingReciters: 'Loading reciters...',
     gotoPrompt: 'Enter page number (1-604)',
     bookmarkN: 'Bookmark',
-    all: 'All', noReciters: 'No reciters found', narrationHafs: 'Hafs from Asim',
+    all: 'All', noReciters: 'No reciters found', narrationHafs: 'Hafs from Asim', cancel: 'Cancel',
     shareTitle: 'Share',
     shareImage: 'Share Image',
     shareText: 'Share Text',
@@ -2496,7 +2522,9 @@ function wrapTxt(ctx,text,mw){
   for(const wd of w){const t=ln+(ln?' ':'')+wd;if(ctx.measureText(t).width>mw&&ln){lines.push(ln);ln=wd;}else ln=t;}
   if(ln)lines.push(ln);return lines;
 }
-// Silent clipboard copy - no browser dialog
+// ============================================================
+// SILENT COPY (no browser dialog)
+// ============================================================
 function silentCopy(text){
   try{
     const ta=document.createElement('textarea');
@@ -2510,7 +2538,9 @@ function silentCopy(text){
   }catch(e){return false;}
 }
 
-// Custom toast - no browser alert
+// ============================================================
+// TOAST
+// ============================================================
 let _toastTimer;
 function showToast(msg,duration){
   const t=document.getElementById('appToast');
@@ -2521,74 +2551,130 @@ function showToast(msg,duration){
   _toastTimer=setTimeout(()=>t.classList.remove('show'),duration||2500);
 }
 
-// Image preview blob for sharing
-let _ipoBlob=null;
+// ============================================================
+// CUSTOM SHARE SHEET
+// ============================================================
+let _ssText='', _ssBlobUrl='', _ssBlobRef=null;
+
+function closeShareSheet(){
+  document.getElementById('ssOverlay').classList.remove('show');
+}
 function closeImgPreview(){
   document.getElementById('imgPreviewOverlay').classList.remove('show');
   const img=document.getElementById('ipoImg');
-  if(img.src.startsWith('blob:'))URL.revokeObjectURL(img.src);
+  if(img.src&&img.src.startsWith('blob:'))URL.revokeObjectURL(img.src);
   img.src='';
-  _ipoBlob=null;
+  _ssBlobRef=null;
 }
-function ipoDoShare(){
-  if(!_ipoBlob)return;
-  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([_ipoBlob],'q.png',{type:'image/png'})]})){
-    const file=new File([_ipoBlob],'quran-verse.png',{type:'image/png'});
-    navigator.share({files:[file]}).then(()=>closeImgPreview()).catch(()=>{});
-  } else {
-    const a=document.createElement('a');a.href=URL.createObjectURL(_ipoBlob);
-    a.download='quran-verse.png';a.click();
-    closeImgPreview();
-  }
+
+// Navigate to URL - works in both browser and WebView
+function _goto(url){
+  try{ window.location.href=url; }catch(e){ window.open(url,'_blank'); }
+}
+
+function ssShareToApp(app){
+  const txt=encodeURIComponent(_ssText);
+  if(app==='wa')  _goto('https://wa.me/?text='+txt);
+  if(app==='tg')  _goto('https://t.me/share/url?url=%20&text='+txt);
+  if(app==='sms') _goto('sms:?body='+txt);
+}
+
+function doCopyFromSS(){
+  silentCopy(_ssText);
+  showToast(T('copied'));
+  closeShareSheet();
+}
+
+function downloadFromSS(){
+  const url=_ssBlobUrl||( _ssBlobRef?URL.createObjectURL(_ssBlobRef):'' );
+  if(!url)return;
+  const a=document.createElement('a');
+  a.href=url; a.download='quran-verse.png'; a.click();
+  showToast(currentLang==='en'?'Image saved!':'تم حفظ الصورة');
+}
+
+function _buildSSRow(withDownload){
+  const isEn=currentLang==='en';
+  const dl=withDownload?`<button class="ss-btn" onclick="downloadFromSS()">
+    <div class="ss-ico" style="background:#546E7A"><i class="fa fa-download" style="color:#fff"></i></div>
+    <span class="ss-lbl">${isEn?'Save':'حفظ'}</span>
+  </button>`:'';
+  return `${dl}
+  <button class="ss-btn" onclick="ssShareToApp('wa')">
+    <div class="ss-ico" style="background:#25D366"><i class="fa-brands fa-whatsapp" style="color:#fff;font-size:30px"></i></div>
+    <span class="ss-lbl">WhatsApp</span>
+  </button>
+  <button class="ss-btn" onclick="ssShareToApp('tg')">
+    <div class="ss-ico" style="background:#2AABEE"><i class="fa-brands fa-telegram" style="color:#fff;font-size:28px"></i></div>
+    <span class="ss-lbl">Telegram</span>
+  </button>
+  <button class="ss-btn" onclick="ssShareToApp('sms')">
+    <div class="ss-ico" style="background:#4CAF50"><i class="fa fa-comment-sms" style="color:#fff;font-size:26px"></i></div>
+    <span class="ss-lbl">${isEn?'SMS':'رسالة'}</span>
+  </button>
+  <button class="ss-btn" onclick="doCopyFromSS()">
+    <div class="ss-ico" style="background:var(--primary)"><i class="fa fa-copy" style="color:#fff;font-size:26px"></i></div>
+    <span class="ss-lbl">${isEn?'Copy':'نسخ'}</span>
+  </button>`;
+}
+
+function showTextShareSheet(text){
+  _ssText=text;
+  _ssBlobRef=null; _ssBlobUrl='';
+  const isEn=currentLang==='en';
+  document.getElementById('ssTtl').textContent=isEn?'Share via':'مشاركة عبر';
+  document.getElementById('ssRow').innerHTML=_buildSSRow(false);
+  document.getElementById('ssOverlay').classList.add('show');
+}
+
+function showImageShareSheet(blob, textRef){
+  _ssText=textRef;
+  _ssBlobRef=blob;
+  if(_ssBlobUrl) URL.revokeObjectURL(_ssBlobUrl);
+  _ssBlobUrl=URL.createObjectURL(blob);
+  const isEn=currentLang==='en';
+  document.getElementById('ssTtl').textContent=isEn?'Share Image':'مشاركة الصورة';
+  document.getElementById('ssRow').innerHTML=_buildSSRow(true);
+  document.getElementById('ssOverlay').classList.add('show');
+}
+
+function _buildShareText(withT){
+  let txt='';
+  if(shareData.length===1){ txt=shareData[0].txt; }
+  else { txt=shareData.map(v=>`﴿${v.a}﴾ ${v.txt}`).join('\n\n'); }
+  if(!withT) txt=txt.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,'');
+  const sn=surahNameById(shareData[0].s)||shareData[0].sn||'';
+  const f=shareData[0],l=shareData[shareData.length-1];
+  let ref=`\n[${sn}: ${f.a}`;if(shareData.length>1)ref+=`-${l.a}`;ref+=']';
+  let full=`${txt}${ref}`;
+  if(document.getElementById('shareBrand')&&document.getElementById('shareBrand').checked) full+='\n\n'+T('brand');
+  return full;
 }
 
 function shareAsImage(){
   const c=document.getElementById('shareCanvas');
   c.toBlob(blob=>{
     if(!blob)return;
-    _ipoBlob=blob;
+    // Show image preview with action buttons
     const url=URL.createObjectURL(blob);
-    const overlay=document.getElementById('imgPreviewOverlay');
     const img=document.getElementById('ipoImg');
-    const hint=document.getElementById('ipoHint');
-    const btn=document.getElementById('ipoShareBtn');
     img.src=url;
-    const canShare=navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],'q.png',{type:'image/png'})]});
-    if(canShare){
-      hint.textContent=currentLang==='en'?'Press Share to send to WhatsApp or other apps':'اضغط مشاركة لإرسالها إلى واتساب أو التطبيقات الأخرى';
-      btn.style.display='flex';
-    } else {
-      hint.textContent=currentLang==='en'?'Long-press the image to save or share':'اضغط مطولاً على الصورة للحفظ أو المشاركة';
-      btn.style.display='none';
-    }
-    overlay.classList.add('show');
+    _ssBlobRef=blob;
+    _ssBlobUrl=url;
+    // Set text ref for WA/TG buttons
+    const sn=surahNameById(shareData[0].s)||shareData[0].sn||'';
+    const f=shareData[0],l=shareData[shareData.length-1];
+    let ref=`[${sn}: ${f.a}`;if(shareData.length>1)ref+=`-${l.a}`;ref+=']';
+    _ssText=ref;
+    const dl=document.getElementById('ipoDlLabel');
+    if(dl) dl.textContent=currentLang==='en'?'Save':'حفظ';
+    document.getElementById('imgPreviewOverlay').classList.add('show');
   });
 }
+
 function shareAsText(withT){
-  // Build text with verse numbers for multiple verses
-  let txt='';
-  if(shareData.length===1){
-    txt=shareData[0].txt;
-  } else {
-    // Multiple verses - show each with its number
-    txt=shareData.map(v=>`﴿${v.a}﴾ ${v.txt}`).join('\n\n');
-  }
-  if(!withT) txt=txt.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,'');
-  const sn=surahNameById(shareData[0].s)||shareData[0].sn||'';
-  const f=shareData[0],l=shareData[shareData.length-1];
-  let ref=`\n[${sn}: ${f.a}`;if(shareData.length>1)ref+=`-${l.a}`;ref+=']';
-  let full=`${txt}${ref}`;
-  if(document.getElementById('shareBrand').checked) full+='\n\n'+T('brand');
-  // Try native share first (WhatsApp etc.), fallback to silent copy
-  if(navigator.share){
-    navigator.share({text:full}).catch(()=>{
-      silentCopy(full);
-      showToast(T('copied'));
-    });
-  } else {
-    silentCopy(full);
-    showToast(T('copied'));
-  }
+  const full=_buildShareText(withT);
+  showTextShareSheet(full);
 }
 
 // TEXT MUSHAF SWIPE
