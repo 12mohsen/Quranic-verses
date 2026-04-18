@@ -423,8 +423,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);background-im
 .share-btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px;transition:.2s}
 .share-btn.img{background:var(--primary);color:#fff}
 .share-btn.txt{background:var(--border);color:#ddeee4}
-.share-btn.link{background:linear-gradient(135deg,#3498db,#2980b9);color:#fff}
-.share-btn.link:hover{background:linear-gradient(135deg,#5dade2,#3498db);transform:translateY(-2px)}
 .share-btn:hover{opacity:.85}
 .share-opt{display:flex;align-items:center;gap:7px;padding:6px 18px;font-size:12px;color:var(--muted)}
 .share-opt input{accent-color:var(--primary)}
@@ -704,7 +702,6 @@ html[dir="ltr"] .ctx-menu{direction:ltr}
       <button class="share-btn img" id="btnShareImage" onclick="shareAsImage()"><i class="fa fa-image"></i> <span data-i18n="shareImage">مشاركة صورة</span></button>
       <button class="share-btn txt" onclick="shareAsText(true)"><i class="fa fa-font"></i> <span data-i18n="shareText">مشاركة نص</span></button>
       <button class="share-btn txt" onclick="shareAsText(false)"><i class="fa fa-text-slash"></i> <span data-i18n="shareNoTashkeel">نص بدون تشكيل</span></button>
-      <button class="share-btn link" id="btnShareAppLink" onclick="shareAppLink()" style="display:none"><i class="fa fa-link"></i> <span data-i18n="shareAppLink">مشاركة رابط الآية</span></button>
     </div>
   </div>
 </div>
@@ -758,7 +755,6 @@ const LANG = {
     shareImage: 'مشاركة صورة',
     shareText: 'مشاركة نص',
     shareNoTashkeel: 'نص بدون تشكيل',
-    shareAppLink: 'مشاركة رابط الآية',
     fromAyah: 'من آية',
     toAyah: 'إلى آية',
     brand: 'بواسطة تطبيق القرآن الكريم',
@@ -794,7 +790,6 @@ const LANG = {
     shareImage: 'Share Image',
     shareText: 'Share Text',
     shareNoTashkeel: 'Text without Tashkeel',
-    shareAppLink: 'Share Ayah Link',
     fromAyah: 'From Ayah',
     toAyah: 'To Ayah',
     brand: 'By The Holy Quran App',
@@ -2056,6 +2051,11 @@ function onSearch(q) {
 // TEXT MUSHAF + BOOKMARKS + SHARING
 // ============================================================
 const QURAN_API = 'https://api.alquran.cloud/v1';
+
+// ⚠️ ضع هنا رابط موقعك أو رابط التطبيق - سيظهر في المشاركات
+// ⚠️ Put your website or app link here - will appear in shares
+const APP_URL = 'https://quranic-v.netlify.app/'; // ← غيّر هذا الرابط
+
 let textMode = false;
 let pageCache = {};
 let localVerses = null;
@@ -2759,8 +2759,6 @@ function renderShareModal(){
   // Set initial range values
   document.getElementById('shareStartAyah').value = f.a;
   document.getElementById('shareEndAyah').value = l.a;
-  // Update app link button visibility
-  updateShareAppLinkButton();
   genShareImage();
 }
 function updateShareRange(){
@@ -2859,7 +2857,10 @@ function genShareImage(){
   // Branding
   if(document.getElementById('shareBrand').checked){
     ctx.font='16px Segoe UI,sans-serif';ctx.fillStyle='#555';
-    ctx.fillText(T('brand'),W/2,H-32);
+    ctx.fillText(T('brand'),W/2,H-48);
+    // ← إضافة رابط الموقع على الصورة
+    ctx.font='14px Segoe UI,sans-serif';ctx.fillStyle='#27a065';
+    ctx.fillText(APP_URL,W/2,H-28);
   }
 }
 function wrapTxt(ctx,text,mw){
@@ -3031,80 +3032,6 @@ function shareAsImage(){
 }
 
 // ---- TEXT SHARE ----
-// ---- APP LINK SHARE ----
-function shareAppLink(){
-  const f=shareData[0], l=shareData[shareData.length-1];
-  if(!f) return;
-  
-  // Check if we have a valid app/deep link
-  const appUrl = getAppDeepLink(f.s, f.a, l.a);
-  if(!appUrl){
-    // No app link available, show message
-    showToast(currentLang==='ar'?'لا يوجد رابط متاح للمشاركة':'No link available to share');
-    return;
-  }
-  
-  const sn=surahNameById(f.s)||f.sn||'';
-  let text = `${sn}: ${T('ayah')} ${f.a}`;
-  if(shareData.length > 1) text += ` ${T('toAyah')} ${l.a}`;
-  text += '\n\n' + appUrl;
-  if(document.getElementById('shareBrand').checked) text += '\n\n' + T('brand');
-  
-  if(hasNativeShare()){
-    navigator.share({title: sn, text: text, url: appUrl}).catch(()=>openSharePicker(text));
-  } else {
-    openSharePicker(text);
-  }
-}
-
-function getAppDeepLink(surah, startAyah, endAyah){
-  // Check if app has a custom URL scheme or web fallback
-  // Priority: 1) Custom app scheme, 2) Web URL, 3) null if none available
-  
-  const appScheme = window.APP_SCHEME || null; // e.g., 'quranapp://'
-  const webBaseUrl = window.APP_WEB_URL || 'https://quran.com'; // Fallback web URL
-  
-  // If we have a custom app scheme, use it
-  if(appScheme){
-    return `${appScheme}ayah/${surah}/${startAyah}${endAyah && endAyah !== startAyah ? `-${endAyah}` : ''}`;
-  }
-  
-  // Otherwise use web fallback (quran.com is the most reliable)
-  // Check if we should use web URL
-  if(webBaseUrl){
-    const end = endAyah && endAyah !== startAyah ? endAyah : startAyah;
-    return `${webBaseUrl}/${surah}/${startAyah}-${end}`;
-  }
-  
-  return null; // No link available
-}
-
-function hasAppDeepLink(){
-  return !!(window.APP_SCHEME || window.APP_WEB_URL);
-}
-
-function updateShareAppLinkButton(){
-  const btn = document.getElementById('btnShareAppLink');
-  if(btn){
-    const hasLink = hasAppDeepLink();
-    btn.style.display = hasLink ? 'flex' : 'none';
-  }
-}
-
-function showToast(msg){
-  const toast = document.createElement('div');
-  toast.className = 'toast-msg';
-  toast.textContent = msg;
-  toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:12px 24px;border-radius:20px;font-size:14px;z-index:1000;animation:fadeInUp 0.3s';
-  document.body.appendChild(toast);
-  setTimeout(()=>{
-    toast.style.opacity = '0';
-    toast.style.transition = 'opacity 0.3s';
-    setTimeout(()=>toast.remove(), 300);
-  }, 2000);
-}
-
-// ---- TEXT SHARE ----
 function shareAsText(withT){
   let txt='';
   if(shareData.length===1){
@@ -3117,12 +3044,18 @@ function shareAsText(withT){
   const f=shareData[0],l=shareData[shareData.length-1];
   let ref=`\n[${sn}: ${f.a}`;if(shareData.length>1)ref+=`-${l.a}`;ref+=']';
   let full=`${txt}${ref}`;
-  if(document.getElementById('shareBrand').checked) full+='\n\n'+T('brand');
+  let shareUrl = '';
+  if(document.getElementById('shareBrand').checked){
+    full+='\n\n'+T('brand');
+    shareUrl = APP_URL; // ← رابط منفصل للأجهزة الذكية
+  }
   // Try native share first; if unavailable/fails, show custom share picker
   if(hasNativeShare()){
-    navigator.share({text:full}).catch(()=>openSharePicker(full));
+    // استخدام url منفصل لضمان ظهور الرابط كرابط قابل للنقر على الأجهزة الذكية
+    const shareObj = shareUrl ? {text: full, url: shareUrl} : {text: full};
+    navigator.share(shareObj).catch(()=>openSharePicker(full + (shareUrl ? '\n' + shareUrl : '')));
   } else {
-    openSharePicker(full);
+    openSharePicker(full + (shareUrl ? '\n' + shareUrl : ''));
   }
 }
 
