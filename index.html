@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="title">القرآن الكريم - استماع وتصفح</title>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-7C7M4ZBTQ9"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-7C7M4ZBTQ9');
-</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -2794,6 +2786,38 @@ function renderFavList(){
 function setPlayMode(m){
   versePlayMode=m;
   ['page','surah','continuous'].forEach(k=>document.getElementById('pm-'+k).classList.toggle('active',k===m));
+  // إعادة بناء قائمة التشغيل فوراً إذا كان هناك تلاوة جارية
+  if(isVerseMode && verseQueue.length>0 && verseQIdx>=0 && verseQIdx<verseQueue.length){
+    const cur = verseQueue[verseQIdx];
+    if(cur && !cur.basmala){
+      const surahData = SURAHS.find(s=>s.id===cur.s);
+      // أعد بناء القائمة من الآية الحالية حسب الوضع الجديد
+      const newQueue = [];
+      if(m === 'page'){
+        const ayahs = curPageAyahs || [];
+        let si = ayahs.findIndex(a=>a.surah.number===cur.s && a.numberInSurah===cur.a);
+        if(si === -1) si = 0;
+        for(let i=si; i<ayahs.length; i++){
+          newQueue.push({s:ayahs[i].surah.number, a:ayahs[i].numberInSurah});
+        }
+      } else if(surahData){
+        for(let i=cur.a; i<=surahData.verses; i++){
+          newQueue.push({s:cur.s, a:i});
+        }
+      }
+      if(newQueue.length > 0){
+        verseQueue = newQueue;
+        verseQIdx = 0;
+      }
+    }
+  }
+  // رسالة توضيحية
+  const msgs = {
+    page: currentLang==='en' ? 'End of page' : 'سيتوقف عند نهاية الصفحة',
+    surah: currentLang==='en' ? 'End of surah' : 'سيتوقف عند نهاية السورة',
+    continuous: currentLang==='en' ? 'Continuous recitation until end of Quran' : 'تلاوة مستمرة حتى ختم القرآن'
+  };
+  if(typeof showToast === 'function') showToast(msgs[m]);
 }
 
 // VERSE-BY-VERSE PLAYBACK WITH HIGHLIGHTING
@@ -2823,16 +2847,23 @@ function startVersePlay(surah,ayah){
     verseQueue.push({s:1,a:1,basmala:true}); // Play Fatiha verse 1 as Bismillah
   }
   
-  // Build queue from ALL surah verses (not just page verses) for continuous tracking
+  // Build queue حسب الوضع المختار
   const surahData=SURAHS.find(s=>s.id===surah);
-  if(surahData && localVerses){
-    const startAyah=ayah;
-    for(let i=startAyah;i<=surahData.verses;i++){
-      verseQueue.push({s:surah,a:i});
-      if(versePlayMode==='page' && verseQueue.length>=10) break; // Limit for page mode
+  if(versePlayMode==='page'){
+    // نهاية الصفحة: فقط آيات الصفحة الحالية من الآية المختارة
+    const ayahs = curPageAyahs || [];
+    let si = ayahs.findIndex(a=>a.surah.number===surah && a.numberInSurah===ayah);
+    if(si === -1) si = 0;
+    for(let i=si; i<ayahs.length; i++){
+      verseQueue.push({s:ayahs[i].surah.number, a:ayahs[i].numberInSurah});
+    }
+  } else if(surahData && localVerses){
+    // نهاية السورة أو تلاوة مستمرة: كل آيات السورة من المختارة لنهايتها
+    for(let i=ayah; i<=surahData.verses; i++){
+      verseQueue.push({s:surah, a:i});
     }
   } else {
-    // Fallback to page verses if local data not loaded
+    // احتياط: آيات الصفحة فقط
     const ayahs=curPageAyahs;
     let si=ayahs.findIndex(a=>a.surah.number===surah&&a.numberInSurah===ayah);
     if(si===-1)si=0;
