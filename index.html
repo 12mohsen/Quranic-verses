@@ -1865,6 +1865,16 @@ audio.addEventListener('error', () => {
   // Remove playing indicator on error
   document.getElementById('ppIcon').className='fa fa-play';
   document.getElementById('ppBtn').classList.remove('playing');
+  // أظهر "غير متوفر" بجانب اسم القارئ
+  const pr = document.getElementById('pReciter');
+  if(pr && currentReciter){
+    const unavailable = currentLang === 'en' ? ' (Unavailable)' : ' (غير متوفر)';
+    const baseName = reciterName(currentReciter);
+    if(!pr.textContent.includes(unavailable.trim())){
+      pr.textContent = baseName + unavailable;
+      pr.style.color = '#e74c3c';
+    }
+  }
   if(isVerseMode && verseQIdx<verseQueue.length){
     const v=verseQueue[verseQIdx];
     console.error('Audio error for verse',v.s+':'+v.a,'URL:',audio.src);
@@ -1874,6 +1884,17 @@ audio.addEventListener('error', () => {
       if(verseQIdx<verseQueue.length) playCurrentVerse();
       else endVerseMode();
     },1000);
+  }
+});
+// عند نجاح التشغيل، أزل تسمية "غير متوفر"
+audio.addEventListener('playing', () => {
+  const pr = document.getElementById('pReciter');
+  if(pr && currentReciter){
+    const baseName = reciterName(currentReciter);
+    if(pr.textContent !== baseName){
+      pr.textContent = baseName;
+      pr.style.color = '';
+    }
   }
 });
 audio.addEventListener('stalled', () => {
@@ -2338,9 +2359,18 @@ function goToAyahFromSearch(surah, ayah){
 // ============================================================
 const QURAN_API = 'https://api.alquran.cloud/v1';
 
-// ⚠️ ضع هنا رابط موقعك أو رابط التطبيق - سيظهر في المشاركات
-// ⚠️ Put your website or app link here - will appear in shares
-const APP_URL = 'https://quranic-v.netlify.app/'; // ← غيّر هذا الرابط
+// ⚠️ روابط المشاركة - تظهر في كل مشاركة نصية/صورة
+// ⚠️ Share links - shown in every text/image share
+const APP_DOWNLOAD_URL = 'https://www.appcreator24.com/app3995050-si435z'; // رابط تحميل التطبيق
+const WEB_URL = 'https://quranic-v.netlify.app/';                          // رابط الموقع على المتصفح
+const APP_URL = WEB_URL;                                                   // للتوافق مع الكود القديم (الصورة)
+// نص الروابط المجمَّع للمشاركة
+function getShareLinks(){
+  if(currentLang === 'en'){
+    return `\n📱 Download the app: ${APP_DOWNLOAD_URL}\n🌐 Open in browser: ${WEB_URL}`;
+  }
+  return `\n📱 APK لتحميل التطبيق: ${APP_DOWNLOAD_URL}\n🌐 لفتحه على المتصفح: ${WEB_URL}`;
+}
 
 let textMode = false;
 let pageCache = {};
@@ -3268,10 +3298,13 @@ function genShareImage(){
   // Branding
   if(document.getElementById('shareBrand').checked){
     ctx.font='16px Segoe UI,sans-serif';ctx.fillStyle='#555';
-    ctx.fillText(T('brand'),W/2,H-48);
-    // ← إضافة رابط الموقع على الصورة
-    ctx.font='14px Segoe UI,sans-serif';ctx.fillStyle='#27a065';
-    ctx.fillText(APP_URL,W/2,H-28);
+    ctx.fillText(T('brand'),W/2,H-58);
+    // ← إضافة الرابطين على الصورة
+    ctx.font='13px Segoe UI,sans-serif';ctx.fillStyle='#27a065';
+    const appLabel = currentLang==='en' ? '📱 App: ' : '📱 تطبيق: ';
+    const webLabel = currentLang==='en' ? '🌐 Web: ' : '🌐 متصفح: ';
+    ctx.fillText(appLabel + APP_DOWNLOAD_URL, W/2, H-36);
+    ctx.fillText(webLabel + WEB_URL, W/2, H-18);
   }
 }
 function wrapTxt(ctx,text,mw){
@@ -3457,7 +3490,7 @@ function shareAsText(withT){
   let full=`${txt}${ref}`;
   // ⚠️ للتأكد من ظهور الرابط دائماً، نضيفه مباشرة دون الاعتماد على checkbox
   // (لأن checkbox قد لا يعمل بشكل صحيح في WebView أو يتغير حالته)
-  const shareText = full + '\n\n' + T('brand') + '\n' + APP_URL;
+  const shareText = full + '\n\n' + T('brand') + getShareLinks();
   
   // Try native share first; if unavailable/fails, show custom share picker
   if(hasNativeShare()){
