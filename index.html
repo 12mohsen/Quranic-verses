@@ -681,12 +681,6 @@ html[dir="ltr"] .ctx-menu{direction:ltr}
   </div>
 </div>
 
-<!-- Hidden form for Netlify Forms detection -->
-<form name="feedback" data-netlify="true" netlify-honeypot="bot-field" hidden>
-  <input name="bot-field">
-  <input name="message">
-</form>
-
 <audio id="audio" preload="auto"></audio>
 
 <!-- OVERLAY -->
@@ -3418,16 +3412,17 @@ function sendFeedback(){
   const btn=document.getElementById('fbSendBtn');
   btn.disabled=true;
   btn.innerHTML=`<i class="fa fa-spinner fa-spin"></i> ${T('fbSending')}`;
-  // Send via Netlify Forms (reliable, no email exposed)
-  const formData=new URLSearchParams();
-  formData.append('form-name','feedback');
-  formData.append('message',text);
-  fetch('/',{
+  // Send via formsubmit.co (email hidden, no backend needed)
+  fetch('https://formsubmit.co/ajax/krain123ify@gmail.com',{
     method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:formData.toString()
-  }).then(r=>{
-    if(r.ok){
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({
+      _subject:'ملاحظة على تطبيق القرآن الكريم',
+      message:text,
+      _template:'table'
+    })
+  }).then(r=>r.json()).then(data=>{
+    if(data.success){
       document.getElementById('fbBody').innerHTML=`
         <div class="fb-done">
           <i class="fa fa-check-circle"></i>
