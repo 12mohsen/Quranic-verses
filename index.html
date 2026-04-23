@@ -3499,16 +3499,8 @@ function openSharePicker(text){
       <div class="sp-label">${isEn?'Telegram':'تيليجرام'}</div>
     </div>
     <div class="sp-item" onclick="spTwitter()">
-      <div class="sp-icon" style="background:#1DA1F2"><i class="fa-brands fa-x-twitter"></i></div>
+      <div class="sp-icon" style="background:#000"><i class="fa-brands fa-x-twitter"></i></div>
       <div class="sp-label">${isEn?'X / Twitter':'إكس'}</div>
-    </div>
-    <div class="sp-item" onclick="spEmail()">
-      <div class="sp-icon" style="background:#EA4335"><i class="fa fa-envelope"></i></div>
-      <div class="sp-label">${isEn?'Email':'بريد'}</div>
-    </div>
-    <div class="sp-item" onclick="spSMS()">
-      <div class="sp-icon" style="background:#5BB974"><i class="fa fa-comment-sms"></i></div>
-      <div class="sp-label">${isEn?'SMS':'رسالة'}</div>
     </div>
     <div class="sp-item" onclick="spCopy()">
       <div class="sp-icon" style="background:#666"><i class="fa fa-copy"></i></div>
@@ -3549,46 +3541,42 @@ function spLaunchWithFallback(nativeUrl,webUrl){
   },900);
 }
 
+// RADICAL SOLUTION for WebView: copy text + open app directly
+// User pastes the copied text into the app's compose box
+function spPasteToast(){
+  const msg=currentLang==='en'
+    ?'✓ Copied! Paste it in the app (long-press → Paste)'
+    :'✓ تم النسخ! الصقه في التطبيق (اضغط مطولاً ← لصق)';
+  showToast(msg,4500);
+}
+
 function spWhatsApp(){
   const txt=_spText+'\n\n'+APP_SHARE_URL;
-  // Copy as safety net, then launch
   silentCopy(txt);
+  // WhatsApp intent URL works well across platforms
   spLaunchWithFallback('whatsapp://send?text='+encodeURIComponent(txt),
                        'https://api.whatsapp.com/send?text='+encodeURIComponent(txt));
   closeSharePicker();
 }
+
 function spTelegram(){
-  const txt=_spText;
-  silentCopy(txt+'\n\n'+APP_SHARE_URL);
-  // Telegram web share requires a valid url parameter (not empty)
-  spLaunchWithFallback('tg://msg_url?url='+encodeURIComponent(APP_SHARE_URL)+'&text='+encodeURIComponent(txt),
-                       'https://t.me/share/url?url='+encodeURIComponent(APP_SHARE_URL)+'&text='+encodeURIComponent(txt));
-  closeSharePicker();
-}
-function spTwitter(){
-  const txt=_spText;
-  silentCopy(txt+'\n\n'+APP_SHARE_URL);
-  // Use x.com (current domain) and include URL
-  spLaunchWithFallback('twitter://post?message='+encodeURIComponent(txt+'\n'+APP_SHARE_URL),
-                       'https://x.com/intent/post?text='+encodeURIComponent(txt)+'&url='+encodeURIComponent(APP_SHARE_URL));
-  closeSharePicker();
-}
-function spEmail(){
-  const subj=currentLang==='en'?'Quran Verse':'آية قرآنية';
-  const body=_spText+'\n\n'+APP_SHARE_URL;
-  silentCopy(body);
-  spLaunch('mailto:?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body));
-  closeSharePicker();
-}
-function spSMS(){
   const txt=_spText+'\n\n'+APP_SHARE_URL;
   silentCopy(txt);
-  // SMS format varies: use separator '?' on iOS, '&' works after that; '&' as first separator needed on some Android
-  const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const sep=isIOS?'&':'?';
-  spLaunch('sms:'+sep+'body='+encodeURIComponent(txt));
   closeSharePicker();
+  spPasteToast();
+  // Just open the Telegram app; user pastes the copied text
+  setTimeout(()=>spLaunchWithFallback('tg://resolve','https://t.me'),200);
 }
+
+function spTwitter(){
+  const txt=_spText+'\n\n'+APP_SHARE_URL;
+  silentCopy(txt);
+  closeSharePicker();
+  spPasteToast();
+  // Open X/Twitter compose directly
+  setTimeout(()=>spLaunchWithFallback('twitter://post','https://x.com/compose/post'),200);
+}
+
 function spCopy(){ silentCopy(_spText+'\n\n'+APP_SHARE_URL); showToast(T('copied')); closeSharePicker(); }
 
 // ---- IMAGE PREVIEW + SHARE/DOWNLOAD (WebView-proof) ----
