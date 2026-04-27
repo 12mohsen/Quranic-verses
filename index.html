@@ -1579,6 +1579,9 @@ function selectTextReciter(name){
     if(d) d.classList.remove('show');
     // Restart current verse with new reciter if playing
     if(isVerseMode && verseQueue.length>0 && verseQIdx>=0 && verseQIdx<verseQueue.length){
+      // Explicit user choice: refresh the frozen verse-mode reciter snapshot
+      verseModeReciter = currentReciter;
+      verseModeEAFolder = getEAFolder();
       const v=verseQueue[verseQIdx];
       loadAndPlayVerseAudio(v);
     }
@@ -1732,9 +1735,9 @@ function playSurah(id) {
   document.getElementById('ppBtn').classList.add('playing');
   setTimeout(checkPlayerScroll,50);
 
-  setSurahAudioSrc(currentReciter, id).then(()=>{
-    audio.play().catch(e => console.log('play error', e));
-  });
+  // Set src synchronously and call play() immediately — no Promise/tick delay
+  setSurahAudioSrc(currentReciter, id);
+  audio.play().catch(e => console.log('play error', e));
   setupMediaSession(`${T('surah')} ${surahName(surah)}`, reciterName(currentReciter));
   updateMediaState(true);
   document.getElementById('player').classList.add('show');
@@ -2559,6 +2562,14 @@ let versePlayMode = 'continuous';
 let verseQueue = [];
 let verseQIdx = -1;
 let isVerseMode = false;
+// Snapshot of the verse-mode reciter taken when verse playback starts.
+// Prevents in-progress recitation from suddenly switching reciter just
+// because the user picked another reciter on the home page.
+// Both the reciter object (for display) and its everyayah folder (for audio
+// URL) are frozen until the user EXPLICITLY changes the verse-mode reciter
+// via the text-mode reciter dropdown, or until verse mode ends.
+let verseModeReciter = null;
+let verseModeEAFolder = null;
 const BM_COLORS = ['#e74c3c','#3498db','#f39c12','#2ecc71','#9b59b6'];
 const BM_NAMES = ['فاصل ١','فاصل ٢','فاصل ٣','فاصل ٤','فاصل ٥'];
 let bookmarks = JSON.parse(localStorage.getItem('q_bm') || '[null,null,null,null,null]');
@@ -2611,7 +2622,9 @@ function hasVerseByVerse(){
   return true; // Always use verse-by-verse (Alafasy as fallback)
 }
 function verseAudioUrl(s,a){
-  const f=getEAFolder();
+  // Use the frozen verse-mode reciter while a recitation is in progress so it
+  // can't be hijacked by an unrelated home-page reciter selection.
+  const f = (isVerseMode && verseModeEAFolder) ? verseModeEAFolder : getEAFolder();
   if(!f) return null;
   return `https://everyayah.com/data/${f}/${String(s).padStart(3,'0')}${String(a).padStart(3,'0')}.mp3`;
 }
@@ -3027,6 +3040,12 @@ function playFromVerse(){
 function startVersePlay(surah,ayah){
   isVerseMode=true;
   currentPlaySurah=surah;
+  // Freeze the reciter for this whole recitation session.
+  // ANY change to currentReciter from the home page will be ignored
+  // until the user explicitly picks another reciter from the text-mode
+  // dropdown, or recitation ends.
+  verseModeReciter = currentReciter;
+  verseModeEAFolder = getEAFolder();
   verseQueue=[];
   // إعادة ضبط العلم: عند بدء تلاوة جديدة نتابع مع القارئ تلقائياً
   userNavigatedManually = false;
@@ -3179,16 +3198,21 @@ function loadAndPlayVerseAudio(v){
     label=`${surahNameById(v.s)} - ${T('ayah')} ${v.a}`;
   }
   document.getElementById('pSurah').textContent=label;
-  document.getElementById('pReciter').textContent=currentReciter?reciterName(currentReciter):'—';
+  // Use the FROZEN verse-mode reciter for the displayed name so it never
+  // changes mid-recitation when the user browses other reciters on home.
+  const dispRec = verseModeReciter || currentReciter;
+  document.getElementById('pReciter').textContent=dispRec?reciterName(dispRec):'—';
   document.getElementById('ppIcon').className='fa fa-pause';
   document.getElementById('ppBtn').classList.add('playing');
   document.getElementById('player').classList.add('show');
   setTimeout(checkPlayerScroll,50);
-  setupMediaSession(label, currentReciter?currentReciter.name:'مشاري العفاسي');
+  setupMediaSession(label, dispRec?dispRec.name:'مشاري العفاسي');
   updateMediaState(true);
 }
 function endVerseMode(){
   isVerseMode=false;
+  verseModeReciter=null;
+  verseModeEAFolder=null;
   verseQueue=[];verseQIdx=-1;
   document.querySelectorAll('.vrs.playing').forEach(e=>e.classList.remove('playing'));
   document.getElementById('ppIcon').className='fa fa-play';
@@ -4052,9 +4076,13 @@ async function clearAllDownloads(){
  * and non-downloaded surahs stream normally on demand.
  */
 function setSurahAudioSrc(reciter, id){
-  audio.preload = 'metadata'; // don't pre-buffer until the user presses play
-  audio.src = audioUrl(reciter, id);
-  return Promise.resolve();
+  const url = audioUrl(reciter, id);
+  // Aggressive buffering so playback starts as fast as possible once the user
+  // pressed play. The <audio> element will still stream via HTTP Range requests
+  // (not buffer the entire file in RAM), and for downloaded surahs the
+  // Service Worker serves bytes directly from the Cache Storage on disk.
+  audio.preload = 'auto';
+  if (audio.src !== url) audio.src = url;
 }
 
 /* ===== Settings modal ===== */
