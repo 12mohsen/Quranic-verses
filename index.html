@@ -12,6 +12,13 @@
   gtag('js', new Date());
   gtag('config', 'G-7C7M4ZBTQ9');
 </script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#27a065">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="القرآن الكريم">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -143,6 +150,50 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);background-im
 .s-meta{font-size:11px;color:var(--muted);margin-top:2px}
 .s-play{color:var(--primary);font-size:17px;opacity:0;transition:.2s}
 .surah-card:hover .s-play,.surah-card.playing .s-play{opacity:1}
+/* DOWNLOAD BUTTON ON SURAH CARD */
+.s-dl{position:relative;width:34px;height:34px;border-radius:50%;border:none;background:var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:.2s;padding:0}
+.s-dl:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
+.s-dl.downloaded{background:rgba(39,160,101,0.18);color:var(--primary)}
+.s-dl.downloaded:hover{background:#e74c3c;color:#fff}
+.s-dl.downloading{background:var(--card);color:var(--primary);cursor:default}
+.s-dl.downloading:hover{transform:none}
+.s-dl .dl-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none}
+.s-dl .dl-ring circle{fill:none;stroke-width:3;stroke-linecap:round}
+.s-dl .dl-ring .bg{stroke:rgba(255,255,255,0.08)}
+.s-dl .dl-ring .fg{stroke:var(--primary);stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset .15s linear}
+.s-dl.downloading .dl-icon{display:none}
+.s-dl:not(.downloading) .dl-ring{display:none}
+
+/* SETTINGS MODAL */
+.set-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:9000;padding:16px;backdrop-filter:blur(4px)}
+.set-overlay.show{display:flex;animation:setFade .2s ease}
+@keyframes setFade{from{opacity:0}to{opacity:1}}
+.set-modal{background:var(--card);border-radius:18px;max-width:560px;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5);border:1px solid var(--border)}
+.set-head{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;padding:16px 20px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+.set-head h3{margin:0;font-size:17px;display:flex;align-items:center;gap:10px}
+.set-head .set-close{background:rgba(255,255,255,0.18);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px;transition:.2s}
+.set-head .set-close:hover{background:rgba(255,255,255,0.3)}
+.set-body{padding:18px 20px;overflow-y:auto;flex:1}
+.set-section{margin-bottom:22px}
+.set-section h4{font-size:14px;font-weight:700;color:var(--primary-light);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.set-storage{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:14px}
+.set-storage .stor-icon{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex-shrink:0}
+.set-storage .stor-info{flex:1}
+.set-storage .stor-count{font-size:15px;font-weight:700;color:#ddeee4}
+.set-storage .stor-size{font-size:12px;color:var(--muted);margin-top:2px}
+.set-clear-btn{padding:9px 16px;border-radius:22px;border:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;transition:.2s;flex-shrink:0}
+.set-clear-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 14px rgba(231,76,60,0.4)}
+.set-clear-btn:disabled{opacity:.5;cursor:not-allowed}
+.set-dl-list{max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+.set-dl-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border)}
+.set-dl-item:last-child{border-bottom:none}
+.set-dl-item .dl-i-info{flex:1;min-width:0}
+.set-dl-item .dl-i-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.set-dl-item .dl-i-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.set-dl-item .dl-i-del{width:30px;height:30px;border-radius:50%;border:none;background:rgba(231,76,60,0.12);color:#e74c3c;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.set-dl-item .dl-i-del:hover{background:#e74c3c;color:#fff}
+.set-empty{text-align:center;padding:30px 16px;color:var(--muted);font-size:13px}
+.set-empty i{font-size:34px;display:block;margin-bottom:10px;color:var(--border)}
 
 /* PDF VIEWER */
 .pdf-wrap{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
@@ -547,6 +598,7 @@ html[dir="ltr"] .ctx-menu{direction:ltr}
       <input type="text" id="searchInput" data-i18n-ph="searchPlaceholder" placeholder="ابحث عن سورة أو قارئ أو آية..." oninput="onSearchDebounced(this.value)">
     </div>
     <button onclick="toggleLang()" id="langBtn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;transition:.2s;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fa fa-globe"></i> <span id="langLabel">EN</span></button>
+    <button onclick="openSettings()" id="settingsBtn" title="الإعدادات" aria-label="الإعدادات" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;width:36px;height:34px;cursor:pointer;font-size:14px;transition:.2s;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><i class="fa fa-gear"></i></button>
   </div>
 </header>
 
@@ -1548,8 +1600,13 @@ function renderSurahsForReciter() {
         <div class="s-name">${surahName(s)}</div>
         <div class="s-meta">${s.verses} ${T('verses')} · <span class="tag ${s.type==='مكية'?'makkiyya':'madaniyya'}">${s.type==='مكية'?T('meccan'):T('medinan')}</span></div>
       </div>
+      <button class="s-dl" id="dl-${s.id}" onclick="event.stopPropagation();toggleSurahDownload(${s.id},this)" title="تحميل / حذف" aria-label="تحميل">
+        <i class="fa fa-download dl-icon"></i>
+        <svg class="dl-ring" viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" cx="18" cy="18" r="15.9"/></svg>
+      </button>
       <i class="fa ${currentSurahId===s.id&&currentReciter?'fa-pause':'fa-play'} s-play"></i>
     </div>`).join('');
+  refreshDownloadButtons();
 }
 
 // ============================================================
@@ -1675,8 +1732,9 @@ function playSurah(id) {
   document.getElementById('ppBtn').classList.add('playing');
   setTimeout(checkPlayerScroll,50);
 
-  audio.src = audioUrl(currentReciter, id);
-  audio.play().catch(e => console.log('play error', e));
+  setSurahAudioSrc(currentReciter, id).then(()=>{
+    audio.play().catch(e => console.log('play error', e));
+  });
   setupMediaSession(`${T('surah')} ${surahName(surah)}`, reciterName(currentReciter));
   updateMediaState(true);
   document.getElementById('player').classList.add('show');
@@ -3770,6 +3828,379 @@ async function restoreState(){
   applyLang();
 }
 restoreState();
+</script>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="set-overlay" id="setOverlay" onclick="if(event.target===this)closeSettings()">
+  <div class="set-modal" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="set-head">
+      <h3 id="setTitle"><i class="fa fa-gear"></i> الإعدادات</h3>
+      <button class="set-close" onclick="closeSettings()" aria-label="إغلاق"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="set-body">
+      <div class="set-section">
+        <h4><i class="fa fa-cloud-arrow-down"></i> السور المحملة للاستماع بدون إنترنت</h4>
+        <div class="set-storage" id="setStorageBox">
+          <div class="stor-icon"><i class="fa fa-hard-drive"></i></div>
+          <div class="stor-info">
+            <div class="stor-count" id="setDlCount">0 سور محمّلة</div>
+            <div class="stor-size" id="setDlSize">0 MB</div>
+          </div>
+          <button class="set-clear-btn" id="setClearBtn" onclick="clearAllDownloads()">
+            <i class="fa fa-trash"></i> مسح الكل
+          </button>
+        </div>
+        <div class="set-dl-list" id="setDlList" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ OFFLINE SURAH DOWNLOADS ============ */
+const DOWNLOADS_CACHE = 'quran-downloads-v1';
+const DL_INDEX_KEY    = 'q_downloads_index';
+
+function getDlIndex(){
+  try { return JSON.parse(localStorage.getItem(DL_INDEX_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveDlIndex(idx){
+  localStorage.setItem(DL_INDEX_KEY, JSON.stringify(idx));
+}
+
+async function isUrlDownloaded(url){
+  if(!('caches' in window)) return false;
+  try {
+    const c = await caches.open(DOWNLOADS_CACHE);
+    const m = await c.match(url, {ignoreSearch:true});
+    return !!m;
+  } catch(e){ return false; }
+}
+
+async function refreshDownloadButtons(){
+  if(!currentReciter || !('caches' in window)) return;
+  const buttons = document.querySelectorAll('.s-dl');
+  for(const btn of buttons){
+    const id = +btn.id.replace('dl-','');
+    const url = audioUrl(currentReciter, id);
+    const has = await isUrlDownloaded(url);
+    btn.classList.toggle('downloaded', has);
+    const icon = btn.querySelector('.dl-icon');
+    if(icon) icon.className = has ? 'fa fa-check dl-icon' : 'fa fa-download dl-icon';
+    btn.title = has ? 'تم التحميل — اضغط للحذف' : 'تحميل للاستماع بدون إنترنت';
+  }
+}
+
+async function toggleSurahDownload(id, btn){
+  if(!('caches' in window)){ alert('المتصفح لا يدعم التخزين المحلي'); return; }
+  if(!currentReciter){ alert('اختر القارئ أولاً'); return; }
+  const url = audioUrl(currentReciter, id);
+  const has = await isUrlDownloaded(url);
+  if(has){
+    if(!confirm('هل تريد حذف هذه السورة من التحميلات؟')) return;
+    await removeDownload(url);
+    btn.classList.remove('downloaded');
+    const icon = btn.querySelector('.dl-icon');
+    if(icon) icon.className = 'fa fa-download dl-icon';
+    return;
+  }
+  await downloadSurah(id, btn);
+}
+
+async function downloadSurah(id, btn){
+  const url = audioUrl(currentReciter, id);
+  const surah = SURAHS.find(s=>s.id===id);
+  btn.classList.add('downloading');
+  btn.disabled = true;
+  const ring = btn.querySelector('.dl-ring .fg');
+  if(ring) ring.style.strokeDashoffset = 100;
+
+  const setProgress = (frac) => {
+    if(ring) ring.style.strokeDashoffset = String(100 - Math.max(0, Math.min(1, frac)) * 100);
+  };
+
+  const cache = await caches.open(DOWNLOADS_CACHE);
+  let cached = false, size = 0;
+
+  // Strategy A: CORS fetch with STREAMED cache write + progress tracking
+  // - Uses ReadableStream.tee() so the file is NEVER fully held in JS memory.
+  // - One branch is consumed by cache.put() (browser writes directly to disk).
+  // - Other branch only reads byte counts for the progress ring, then discards.
+  try {
+    const resp = await fetch(url, {mode:'cors'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const total = +resp.headers.get('content-length') || 0;
+    if(!resp.body || !resp.body.tee) throw new Error('no-stream');
+
+    const [forCache, forProgress] = resp.body.tee();
+
+    // Indeterminate animation if size unknown
+    let indet = 0, indetTimer = null;
+    if(!total){
+      indetTimer = setInterval(()=>{ indet=(indet+0.05)%1; setProgress(indet); }, 120);
+    }
+
+    // Track progress without buffering the bytes (chunks are discarded)
+    const progressPromise = (async ()=>{
+      const reader = forProgress.getReader();
+      let received = 0;
+      while(true){
+        const {done, value} = await reader.read();
+        if(done) break;
+        received += value.length;
+        if(total) setProgress(received/total);
+        // value goes out of scope here -> GC, nothing accumulated
+      }
+      if(indetTimer) clearInterval(indetTimer);
+      size = received;
+    })();
+
+    // Build a streamable Response for the cache. The browser will pull from
+    // `forCache` and write to disk incrementally — no big JS-side buffer.
+    const cacheResp = new Response(forCache, {
+      status: 200, statusText: 'OK',
+      headers: {
+        'Content-Type':   resp.headers.get('content-type')   || 'audio/mpeg',
+        'Content-Length': resp.headers.get('content-length') || ''
+      }
+    });
+    await cache.put(url, cacheResp);
+    await progressPromise;
+    if(total) size = total;
+    cached = true;
+  } catch(corsErr){
+    // Strategy B: opaque no-cors fallback (no progress possible).
+    // cache.put still streams internally — no JS buffer either.
+    try {
+      let indet = 0; const indetTimer = setInterval(()=>{ indet=(indet+0.05)%1; setProgress(indet); }, 120);
+      const opaque = await fetch(url, {mode:'no-cors'});
+      await cache.put(url, opaque);
+      clearInterval(indetTimer);
+      cached = true;
+      // size unknown for opaque
+    } catch(err2){
+      console.warn('download failed', err2);
+    }
+  }
+
+  btn.classList.remove('downloading');
+  btn.disabled = false;
+  if(cached){
+    btn.classList.add('downloaded');
+    const icon = btn.querySelector('.dl-icon');
+    if(icon) icon.className = 'fa fa-check dl-icon';
+    setProgress(0);
+    // Update index
+    const idx = getDlIndex();
+    idx[url] = {
+      surahId: id,
+      surahName: surah ? surah.name : ('سورة '+id),
+      reciterName: reciterName(currentReciter),
+      size: size,
+      date: Date.now()
+    };
+    saveDlIndex(idx);
+    if(typeof showToast==='function') showToast('تم تحميل السورة للاستماع بدون إنترنت');
+  } else {
+    if(typeof showToast==='function') showToast('فشل التحميل — تحقق من الاتصال');
+    else alert('فشل التحميل');
+  }
+}
+
+async function removeDownload(url){
+  try {
+    const cache = await caches.open(DOWNLOADS_CACHE);
+    await cache.delete(url, {ignoreSearch:true});
+  } catch(e){}
+  const idx = getDlIndex();
+  delete idx[url];
+  saveDlIndex(idx);
+}
+
+async function clearAllDownloads(){
+  const idx = getDlIndex();
+  const count = Object.keys(idx).length;
+  if(count === 0){
+    if(typeof showToast==='function') showToast('لا توجد سور محمّلة');
+    return;
+  }
+  if(!confirm(`هل تريد حذف جميع السور المحمّلة (${count} سورة)؟ سيوفر ذلك مساحة على جهازك.`)) return;
+  try {
+    await caches.delete(DOWNLOADS_CACHE);
+    // Recreate empty cache so future downloads work without reload
+    await caches.open(DOWNLOADS_CACHE);
+  } catch(e){}
+  saveDlIndex({});
+  refreshDownloadButtons();
+  renderSettingsList();
+  if(typeof showToast==='function') showToast('تم مسح جميع السور المحملة');
+}
+
+/* ===== Audio src resolver =====
+ * We intentionally DO NOT read the cached file into a Blob/ObjectURL.
+ * That would load the whole surah (up to tens of MB) into RAM just to start playback.
+ *
+ * Instead we always set the original HTTP URL as `audio.src`:
+ *   - The <audio> element streams via Range requests (only fetches the bytes it
+ *     currently needs to play; memory usage stays minimal).
+ *   - The Service Worker's audioStrategy() intercepts the request, checks
+ *     DOWNLOADS_CACHE first, and serves from there when the surah is downloaded,
+ *     otherwise goes to the network.
+ *
+ * Result: downloaded surahs play offline without loading the full file in memory,
+ * and non-downloaded surahs stream normally on demand.
+ */
+function setSurahAudioSrc(reciter, id){
+  audio.preload = 'metadata'; // don't pre-buffer until the user presses play
+  audio.src = audioUrl(reciter, id);
+  return Promise.resolve();
+}
+
+/* ===== Settings modal ===== */
+function openSettings(){
+  document.getElementById('setOverlay').classList.add('show');
+  renderSettingsList();
+}
+function closeSettings(){
+  document.getElementById('setOverlay').classList.remove('show');
+}
+function fmtBytes(n){
+  if(!n) return '—';
+  if(n < 1024) return n+' B';
+  if(n < 1024*1024) return (n/1024).toFixed(1)+' KB';
+  if(n < 1024*1024*1024) return (n/1024/1024).toFixed(1)+' MB';
+  return (n/1024/1024/1024).toFixed(2)+' GB';
+}
+function renderSettingsList(){
+  const idx = getDlIndex();
+  const entries = Object.entries(idx).sort((a,b)=>(b[1].date||0)-(a[1].date||0));
+  const totalSize = entries.reduce((s,[,v])=>s+(v.size||0),0);
+  document.getElementById('setDlCount').textContent = `${entries.length} سور محمّلة`;
+  document.getElementById('setDlSize').textContent = totalSize ? fmtBytes(totalSize) : (entries.length?'حجم غير معروف':'0 MB');
+  document.getElementById('setClearBtn').disabled = entries.length === 0;
+  const list = document.getElementById('setDlList');
+  if(entries.length === 0){
+    list.innerHTML = `<div class="set-empty"><i class="fa fa-cloud"></i>لم يتم تحميل أي سور بعد<br><span style="font-size:11px">اضغط على أيقونة التحميل بجانب أي سورة لحفظها</span></div>`;
+    return;
+  }
+  list.innerHTML = entries.map(([url,v])=>`
+    <div class="set-dl-item">
+      <div class="dl-i-info">
+        <div class="dl-i-name">${v.surahName||'—'}</div>
+        <div class="dl-i-meta">${v.reciterName||''} ${v.size?'· '+fmtBytes(v.size):''}</div>
+      </div>
+      <button class="dl-i-del" onclick="deleteDownloadAndRefresh('${url.replace(/'/g,"\\'")}')" aria-label="حذف"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+}
+async function deleteDownloadAndRefresh(url){
+  await removeDownload(url);
+  renderSettingsList();
+  refreshDownloadButtons();
+}
+
+// ESC to close
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape' && document.getElementById('setOverlay').classList.contains('show')){
+    closeSettings();
+  }
+});
+</script>
+
+<!-- ============ PWA: Update notification banner ============ -->
+<style>
+#pwa-update-banner{position:fixed;top:0;left:0;right:0;transform:translateY(-110%);background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;padding:12px 20px;box-shadow:0 4px 20px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;gap:14px;z-index:10000;border-bottom:2px solid var(--accent);transition:transform .4s ease;font-family:'Segoe UI',Tahoma,sans-serif;flex-wrap:wrap}
+#pwa-update-banner.show{transform:translateY(0);animation:pwaSlideIn .5s ease}
+@keyframes pwaSlideIn{0%{transform:translateY(-110%)}100%{transform:translateY(0)}}
+#pwa-update-banner .pwa-msg{font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px}
+#pwa-update-banner .pwa-msg i{color:var(--accent);font-size:20px;animation:pwaBounce 1.6s ease-in-out infinite}
+@keyframes pwaBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+#pwa-update-banner button{border:none;cursor:pointer;padding:8px 18px;border-radius:22px;font-size:13px;font-weight:700;transition:.2s;font-family:inherit}
+#pwa-update-banner .pwa-reload{background:var(--accent);color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+#pwa-update-banner .pwa-reload:hover{background:#e6bc54;transform:translateY(-1px)}
+#pwa-update-banner .pwa-dismiss{background:rgba(255,255,255,0.12);color:#fff;padding:8px 14px}
+#pwa-update-banner .pwa-dismiss:hover{background:rgba(255,255,255,0.22)}
+@media (max-width:480px){#pwa-update-banner{padding:10px 12px;gap:8px}#pwa-update-banner .pwa-msg{font-size:13px;width:100%;justify-content:center}#pwa-update-banner button{flex:1;max-width:140px}}
+</style>
+<div id="pwa-update-banner" role="alert" aria-live="polite">
+  <span class="pwa-msg"><i class="fa fa-cloud-arrow-down"></i><span>يتوفر إصدار جديد من التطبيق</span></span>
+  <button class="pwa-reload" type="button">تحديث الآن</button>
+  <button class="pwa-dismiss" type="button" aria-label="إغلاق">لاحقاً</button>
+</div>
+
+<script>
+/* ============ PWA registration + update flow ============ */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  var banner  = document.getElementById('pwa-update-banner');
+  var btnGo   = banner.querySelector('.pwa-reload');
+  var btnBye  = banner.querySelector('.pwa-dismiss');
+  var waitingWorker = null;
+  var refreshing = false;
+
+  function showBanner(){ banner.classList.add('show'); }
+  function hideBanner(){ banner.classList.remove('show'); }
+
+  function trackWaiting(reg){
+    if(reg.waiting){
+      waitingWorker = reg.waiting;
+      showBanner();
+    }
+    if(reg.installing){
+      reg.installing.addEventListener('statechange', function(){
+        if(this.state === 'installed' && navigator.serviceWorker.controller){
+          waitingWorker = this;
+          showBanner();
+        }
+      });
+    }
+    reg.addEventListener('updatefound', function(){
+      var nw = reg.installing;
+      if(!nw) return;
+      nw.addEventListener('statechange', function(){
+        if(nw.state === 'installed' && navigator.serviceWorker.controller){
+          waitingWorker = nw;
+          showBanner();
+        }
+      });
+    });
+  }
+
+  btnGo.addEventListener('click', function(){
+    if(waitingWorker){
+      waitingWorker.postMessage('SKIP_WAITING');
+    } else {
+      location.reload();
+    }
+  });
+  btnBye.addEventListener('click', hideBanner);
+
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+
+  // وضع المعاينة: أضف ?pwa-test إلى الرابط لرؤية اللوحة
+  if(/[?&]pwa-test\b/.test(location.search)){
+    setTimeout(showBanner, 600);
+  }
+  // متاح في الكونسول للاختبار اليدوي: pwaShowUpdate()
+  window.pwaShowUpdate = showBanner;
+  window.pwaHideUpdate = hideBanner;
+
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('service-worker.js')
+      .then(function(reg){
+        trackWaiting(reg);
+        // Check for updates periodically
+        setInterval(function(){ reg.update().catch(function(){}); }, 60*60*1000);
+        // Also check when the page regains focus
+        window.addEventListener('focus', function(){ reg.update().catch(function(){}); });
+      })
+      .catch(function(err){ console.warn('SW registration failed:', err); });
+  });
+})();
 </script>
 </body>
 </html>
